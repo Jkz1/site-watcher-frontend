@@ -2,13 +2,35 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const baseurl = process.env.NEXT_PUBLIC_BASE_URL
 
-  const handleLogin = (e: React.FormEvent) => {
+  const router = useRouter();
+  const [formData, setFormData] = useState({ username: '', password: '' });
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
+    
+    try {
+      const response = await fetch(`${baseurl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast.success("Login successfully!"); // 2. Success Toast
+        router.push('/dashboard');
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Login failed. Try again."); // 3. Error Toast
+      }
+    } catch (error) {
+      toast.error("Network error. Is your Go backend running?");
+    }
   };
 
   return (
@@ -34,16 +56,20 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <input 
-              type="email" 
-              placeholder="Email Address" 
+              type="text" 
+              placeholder="Username" 
               className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none" 
               required 
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             />
             <input 
               type="password" 
               placeholder="Password" 
               className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none" 
               required 
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
 
             <button 

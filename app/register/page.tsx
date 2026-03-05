@@ -2,13 +2,36 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function RegisterPage() {
-  const router = useRouter();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const baseurl = process.env.NEXT_PUBLIC_BASE_URL
+
+  const router = useRouter();
+  const [formData, setFormData] = useState({ username: '', password: '' });
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/login');
+    
+    try {
+      const response = await fetch(`${baseurl}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast.success("Account created successfully!"); // 2. Success Toast
+        router.push('/login');
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Registration failed. Try again."); // 3. Error Toast
+      }
+    } catch (error) {
+      toast.error("Network error. Is your Go backend running?");
+    }
   };
 
   return (
@@ -32,22 +55,43 @@ export default function RegisterPage() {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Admin Name</label>
-              <input type="text" placeholder="John Doe" className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" required />
+              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Username</label>
+              <input 
+                type="text" 
+                placeholder="John Doe" 
+                className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" 
+                required 
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Email Endpoint</label>
-              <input type="email" placeholder="admin@company.com" className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" required />
-            </div>
+              <input 
+                type="email" 
+                placeholder="admin@company.com" 
+                className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" 
+                required 
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div> */}
             
             <div>
-              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Access Key</label>
-              <input type="password" placeholder="••••••••" className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" required />
+              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" 
+                required 
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
             </div>
 
             <button type="submit" className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-400 text-[#020617] rounded-xl font-bold transition-all transform active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-              Create Admin Account
+              Create Account
             </button>
           </form>
 
