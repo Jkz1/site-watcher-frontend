@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { setAuthCookie } from '../actions/auth';
 
 export default function LoginPage() {
   const baseurl = process.env.NEXT_PUBLIC_BASE_URL
@@ -22,7 +23,10 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        toast.success("Login successfully!"); // 2. Success Toast
+        const data = await response.json();
+        const token = data.token
+        setAuthCookie(token); // Store token in HTTP-only cookie
+        toast.success("Login successfully!"); 
         router.push('/dashboard');
       } else {
         const errorData = await response.json();

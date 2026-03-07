@@ -65,18 +65,6 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               />
             </div>
-
-            {/* <div>
-              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Email Endpoint</label>
-              <input 
-                type="email" 
-                placeholder="admin@company.com" 
-                className="w-full p-3.5 rounded-xl bg-slate-950/50 border border-slate-800 text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" 
-                required 
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div> */}
             
             <div>
               <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ml-1">Password</label>
