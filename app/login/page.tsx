@@ -25,12 +25,13 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         const token = data.token
-        setAuthCookie(token); // Store token in HTTP-only cookie
+        setAuthCookie(token); 
         toast.success("Login successfully!"); 
+        console.log(token);
         router.push('/dashboard');
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || "Login failed. Try again."); // 3. Error Toast
+        toast.error(errorData.message || "Login failed. Try again."); 
       }
     } catch (error) {
       toast.error("Network error. Is your Go backend running?");
