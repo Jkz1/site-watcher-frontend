@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { Play, Pause, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ interface Site {
   is_active: boolean;
   created_at: string;
 }
+
 export default function Dashboard({ initialData }: { initialData: Site[] }) {
   const baseurl = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -23,11 +25,6 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sites, setSites] = useState(initialData);
 
-  // const [sites, setSites] = useState([
-  //   { id: 1, name: "Main API", url: "api.mysite.com", status: "Online", uptime: "99.9%", latency: "42ms" },
-  //   { id: 2, name: "Storefront", url: "shop.mysite.com", status: "Online", uptime: "98.2%", latency: "120ms" },
-  //   { id: 3, name: "Legacy Blog", url: "blog.old.com", status: "Error", uptime: "45.0%", latency: "—" },
-  // ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -57,25 +54,34 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
       toast.error("Network error. Is your Go backend running?");
     }
   }
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Example toggle function
+  const handleToggle = async () => {
+    setIsLoading(true);
+    // Add your fetch logic to your Go backend here
+    // await fetch(`/api/sites/${site.id}/toggle`, { method: 'POST' });
+    setIsLoading(false);
+  };
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans">
+
       {/* Navbar */}
       <nav className="flex justify-between items-center px-8 py-4 border-b border-emerald-500/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-50">
         <span className="text-xl font-bold text-white tracking-tight">
           Site<span className="text-emerald-400">Watcher</span>
         </span>
-
         <div className="relative">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 p-1.5 pr-4 rounded-full bg-slate-900 border border-slate-800 hover:border-emerald-500/50 transition-all"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-[#020617] font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-linear-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-[#020617] font-bold text-xs">
               JD
             </div>
             <span className="text-sm font-medium text-slate-300">Admin</span>
           </button>
+
           {/* Profile Dropdown */}
           <AnimatePresence>
             {isProfileOpen && (
@@ -179,9 +185,38 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
 
               <div className="flex items-center gap-3">
                 {/* Toggle Switch for is_active */}
-                <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${site.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-500'}`}>
-                  {site.is_active ? 'Live' : 'Paused'}
-                </div>
+                <button
+                  onClick={handleToggle}
+                  disabled={isLoading}
+                  className={`
+    group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase 
+    transition-all duration-300 border backdrop-blur-sm
+    ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
+    ${site.is_active
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'
+                    }
+  `}
+                >
+                  {/* Icon Container */}
+                  <div className="relative w-3 h-3 flex items-center justify-center">
+                    {isLoading ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : site.is_active ? (
+                      <>
+                        {/* Ping animation for 'Live' status */}
+                        <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20"></span>
+                        <Pause size={12} fill="currentColor" className="relative transition-transform group-hover:scale-110" />
+                      </>
+                    ) : (
+                      <Play size={12} fill="currentColor" className="transition-transform group-hover:scale-110" />
+                    )}
+                  </div>
+
+                  <span className="tracking-wider">
+                    {site.is_active ? 'Live' : 'Paused'}
+                  </span>
+                </button>
 
                 <button className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
                   Analytics

@@ -25,9 +25,8 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         const token = data.token
-        setAuthCookie(token); 
+        await setAuthCookie(token); 
         toast.success("Login successfully!"); 
-        console.log(token);
         router.push('/dashboard');
       } else {
         const errorData = await response.json();
