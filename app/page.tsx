@@ -18,7 +18,7 @@ export default function Home() {
 
         <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6">
           Sleep better with <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">
+          <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-500">
             SiteWatcher
           </span>
         </h1>

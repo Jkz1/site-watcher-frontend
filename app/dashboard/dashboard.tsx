@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import AddSiteModal from '../components/dashboard/add-site-modal';
 import { clearAuthCookie, getAuthCookie } from '../actions/auth';
+import { updateSiteStatus } from '../actions/site';
 
 interface Site {
   id: number;
@@ -35,7 +36,6 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
   const handleAddSite = async (site: { name: string; url: string }, e: React.FormEvent) => {
     e.preventDefault();
     const token = await getAuthCookie();
-    console.log(site);
     try {
       const response = await fetch(`${baseurl}/sites`, {
         method: 'POST',
@@ -57,10 +57,29 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Example toggle function
-  const handleToggle = async () => {
+  const handleToggle = async (idx: number) => {
     setIsLoading(true);
-    // Add your fetch logic to your Go backend here
-    // await fetch(`/api/sites/${site.id}/toggle`, { method: 'POST' });
+
+
+    try {
+
+      const res = await updateSiteStatus(sites[idx].id, !sites[idx].is_active);
+      if (res === false) {
+        toast.error("Failed to update site status. Please try again.");
+      } else {
+        const updatedSites = [...sites];
+        updatedSites[idx] = {
+          ...updatedSites[idx],
+          is_active: !updatedSites[idx].is_active
+        };
+        setSites(updatedSites);
+      }
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+
+
+
     setIsLoading(false);
   };
   return (
@@ -141,7 +160,7 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
 
         {/* Sites List */}
         <div className="space-y-4">
-          {sites.map((site) => (
+          {sites.map((site, idx) => (
             <motion.div
               key={site.id}
               initial={{ opacity: 0, x: -10 }}
@@ -178,7 +197,7 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
                 <div className="text-center hidden md:block">
                   <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Monitored Since</p>
                   <p className="text-slate-300 font-mono text-sm">
-                    {new Date(site.created_at).toLocaleDateString()}
+                    {site.created_at.split('T')[0]} {/* Simple date format */}
                   </p>
                 </div>
               </div>
@@ -186,16 +205,9 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
               <div className="flex items-center gap-3">
                 {/* Toggle Switch for is_active */}
                 <button
-                  onClick={handleToggle}
+                  onClick={() => handleToggle(idx)}
                   disabled={isLoading}
-                  className={`
-    group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase 
-    transition-all duration-300 border backdrop-blur-sm
-    ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
-    ${site.is_active
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                      : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'
-                    }
+                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 border backdrop-blur-sm${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}${site.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'}
   `}
                 >
                   {/* Icon Container */}

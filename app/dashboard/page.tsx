@@ -15,7 +15,6 @@ async function getData() {
 
 export default async function DashboardPage() {
     const initialData = await getData();
-    console.log(initialData);
     return (
         <main className="p-8">
             <h1 className="text-2xl font-bold mb-4">My Items</h1>
