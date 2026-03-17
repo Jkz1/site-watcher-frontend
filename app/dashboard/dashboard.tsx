@@ -19,7 +19,7 @@ interface Site {
   created_at: string;
 }
 
-export default function Dashboard({ initialData }: { initialData: Site[] }) {
+export default function Dashboard({ initialData, getSiteFunction }: { initialData: Site[], getSiteFunction: () => Promise<Site[]> } ) {
   const baseurl = process.env.NEXT_PUBLIC_BASE_URL
 
   const router = useRouter();
@@ -45,7 +45,9 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
 
       if (response.ok) {
         toast.success("Site added successfully!"); // 2. Success Toast
-        router.push('/dashboard');
+        setIsModalOpen(false);
+        getSiteFunction().then((data) => setSites(data)); // Refresh the site list
+        // router.push('/dashboard');
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || "Failed to add site. Try again."); // 3. Error Toast
