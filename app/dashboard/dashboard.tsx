@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Play, Pause, Loader2 } from 'lucide-react';
+import { Play, Pause, Loader2, TrashIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -165,23 +165,23 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
               key={site.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="group p-5 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-emerald-500/30 backdrop-blur-md flex flex-wrap items-center justify-between gap-6 transition-all"
+              /* CHANGE: Switched to grid for desktop, flex for mobile */
+              className="group p-5 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-emerald-500/30 backdrop-blur-md grid grid-cols-1 md:grid-cols-12 items-center gap-6 transition-all"
             >
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  {/* Logic: If last_status is 200, it's Online. 
-          You can adjust this if your backend sends 1 for online, etc. 
-      */}
+              {/* LEFT SECTION: Site Info (Span 4 columns) */}
+              <div className="flex items-center gap-4 md:col-span-4 min-w-0">
+                <div className="relative flex-shrink-0">
                   <div className={`w-3 h-3 rounded-full ${site.last_status === 200 ? 'bg-emerald-500' : 'bg-red-500'} ${site.is_active ? 'animate-pulse' : ''}`} />
                   <div className={`absolute inset-0 w-3 h-3 rounded-full blur-[6px] ${site.last_status === 200 ? 'bg-emerald-500/80' : 'bg-red-500/80'}`} />
                 </div>
-                <div>
-                  <h3 className="text-white font-bold text-lg leading-tight">{site.name}</h3>
-                  <p className="text-slate-500 text-xs font-mono">{site.url}</p>
+                <div className="truncate"> {/* Prevents long URLs from breaking the layout */}
+                  <h3 className="text-white font-bold text-lg leading-tight truncate">{site.name}</h3>
+                  <p className="text-slate-500 text-xs font-mono truncate">{site.url}</p>
                 </div>
               </div>
 
-              <div className="flex flex-1 justify-center gap-12">
+              {/* MIDDLE SECTION: Stats (Span 4 columns) */}
+              <div className="flex justify-between md:justify-around md:col-span-5 border-y md:border-y-0 border-slate-800 py-4 md:py-0">
                 <div className="text-center">
                   <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Status</p>
                   <p className={`text-sm font-mono ${site.last_status === 200 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -194,29 +194,26 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
                     {site.last_status === 200 ? `${site.latency_ms}ms` : '—'}
                   </p>
                 </div>
-                <div className="text-center hidden md:block">
+                <div className="text-center hidden lg:block"> {/* Hidden on medium, shown on large */}
                   <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Monitored Since</p>
                   <p className="text-slate-300 font-mono text-sm">
-                    {site.created_at.split('T')[0]} {/* Simple date format */}
+                    {site.created_at.split('T')[0]}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* Toggle Switch for is_active */}
+              {/* RIGHT SECTION: Actions (Span 3 columns) */}
+              <div className="flex items-center justify-end gap-3 md:col-span-3">
                 <button
                   onClick={() => handleToggle(idx)}
                   disabled={isLoading}
-                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 border backdrop-blur-sm${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}${site.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'}
-  `}
+                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 border backdrop-blur-sm ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'} ${site.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'}`}
                 >
-                  {/* Icon Container */}
                   <div className="relative w-3 h-3 flex items-center justify-center">
                     {isLoading ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : site.is_active ? (
                       <>
-                        {/* Ping animation for 'Live' status */}
                         <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20"></span>
                         <Pause size={12} fill="currentColor" className="relative transition-transform group-hover:scale-110" />
                       </>
@@ -224,18 +221,15 @@ export default function Dashboard({ initialData }: { initialData: Site[] }) {
                       <Play size={12} fill="currentColor" className="transition-transform group-hover:scale-110" />
                     )}
                   </div>
-
-                  <span className="tracking-wider">
-                    {site.is_active ? 'Live' : 'Paused'}
-                  </span>
+                  <span className="tracking-wider">{site.is_active ? 'Monitoring' : 'Paused'}</span>
                 </button>
 
-                <button className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
+                <button className="hidden sm:block px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
                   Analytics
                 </button>
 
-                <button className="p-2 text-slate-500 hover:text-red-400 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                <button className="p-2 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
+                  <TrashIcon /> {/* Use your SVG here */}
                 </button>
               </div>
             </motion.div>
