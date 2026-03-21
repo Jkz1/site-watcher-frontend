@@ -31,6 +31,17 @@ export async function getSite() {
     if (!res.ok) throw new Error('Failed to fetch data');
     return res.json();
 }
+
+export async function getHistory(siteId : number ) {
+    const token = await getAuthCookie();
+    const res = await fetch(`${baseurl}/sites/history`, {
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ site_id: siteId })
+    });
+    if (!res.ok) throw new Error('Failed to fetch data');
+    return res.json();
+}
 // import { cookies } from 'next/headers';
 
 // export async function setAuthCookie(token: string) {

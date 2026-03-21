@@ -6,27 +6,21 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import AddSiteModal from '../components/dashboard/add-site-modal';
 import { clearAuthCookie, getAuthCookie } from '../actions/auth';
-import { updateSiteStatus } from '../actions/site';
+import { getHistory, updateSiteStatus } from '../actions/site';
+import { Site } from '../types/site';
+import SiteAnalyticsDrawer from '../components/dashboard/site-analytics-drawer';
 
-interface Site {
-  id: number;
-  userID: number;
-  url: string;
-  name: string;
-  last_status: number;
-  latency_ms: number;
-  is_active: boolean;
-  created_at: string;
-}
 
-export default function Dashboard({ initialData, getSiteFunction }: { initialData: Site[], getSiteFunction: () => Promise<Site[]> } ) {
+export default function Dashboard({ initialData, getSiteFunction }: { initialData: Site[], getSiteFunction: () => Promise<Site[]> }) {
   const baseurl = process.env.NEXT_PUBLIC_BASE_URL
 
   const router = useRouter();
+  const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sites, setSites] = useState(initialData);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+
 
   const handleLogout = async () => {
     await clearAuthCookie();
@@ -58,13 +52,20 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
   }
   const [isLoading, setIsLoading] = useState(false);
 
+  const updateLocalSite = (siteId: number, is_active: boolean) => {
+    setSites((prevSites) =>
+      prevSites.map((s) => (s.id === siteId ? { ...s, is_active } : s))
+    );
+
+    // Also update activeSite so the Drawer UI stays in sync
+    if (activeSite?.id === siteId) {
+      setActiveSite((prev) => prev ? { ...prev, is_active } : null);
+    }
+  };
   // Example toggle function
   const handleToggle = async (idx: number) => {
     setIsLoading(true);
-
-
     try {
-
       const res = await updateSiteStatus(sites[idx].id, !sites[idx].is_active);
       if (res === false) {
         toast.error("Failed to update site status. Please try again.");
@@ -79,14 +80,22 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
     }
-
-
-
     setIsLoading(false);
   };
+
+  const handleAnalytics = async (site: Site) => {
+    setActiveSite(site);
+    setAnalyticsOpen(true);
+  }
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans">
-
+      <SiteAnalyticsDrawer
+        isOpen={analyticsOpen}
+        onClose={() => setAnalyticsOpen(false)}
+        site={activeSite}
+        onStatusUpdate={updateLocalSite}
+      />
       {/* Navbar */}
       <nav className="flex justify-between items-center px-8 py-4 border-b border-emerald-500/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-50">
         <span className="text-xl font-bold text-white tracking-tight">
@@ -172,7 +181,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
             >
               {/* LEFT SECTION: Site Info (Span 4 columns) */}
               <div className="flex items-center gap-4 md:col-span-4 min-w-0">
-                <div className="relative flex-shrink-0">
+                <div className="relative shrink-0">
                   <div className={`w-3 h-3 rounded-full ${site.last_status === 200 ? 'bg-emerald-500' : 'bg-red-500'} ${site.is_active ? 'animate-pulse' : ''}`} />
                   <div className={`absolute inset-0 w-3 h-3 rounded-full blur-[6px] ${site.last_status === 200 ? 'bg-emerald-500/80' : 'bg-red-500/80'}`} />
                 </div>
@@ -226,7 +235,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
                   <span className="tracking-wider">{site.is_active ? 'Monitoring' : 'Paused'}</span>
                 </button>
 
-                <button className="hidden sm:block px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
+                <button onClick={() => handleAnalytics(site)} className="hidden sm:block px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
                   Analytics
                 </button>
 
