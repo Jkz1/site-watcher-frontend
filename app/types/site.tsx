@@ -6,6 +6,7 @@ export interface Site {
   last_status: number;
   latency_ms: number;
   is_active: boolean;
+  last_checked: string;
   created_at: string;
 }
 export interface SiteHealth {

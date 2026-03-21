@@ -17,7 +17,7 @@ interface DrawerProps {
 
 export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, site }: DrawerProps) {
     if (!site) return null;
-    
+
     const { history, isLoading, refresh } = useSiteHistory(site.id);
 
     const isUp = site.last_status === 200;

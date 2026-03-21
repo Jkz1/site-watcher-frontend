@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@theme {
+  /* Define the keyframes */
+  @keyframes ping-once {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  /* Create the utility class name */
+  --animate-ping-once: ping-once 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
