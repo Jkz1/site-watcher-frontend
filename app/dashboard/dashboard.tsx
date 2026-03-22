@@ -21,10 +21,8 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
   const [sites, setSites] = useState(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  // Inside your Page Component
   const [token, setToken] = useState<string | null>(null);
 
-  // Get the token on mount
   useEffect(() => {
     getAuthCookie().then((t) => {
       if (!t) {
@@ -35,7 +33,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
     });
   }, []);
 
-  const watcher = useSiteWatcher(initialData, token);
+  const watcher = useSiteWatcher(token, setSites);
 
   const handleLogout = async () => {
     await clearAuthCookie();
@@ -53,13 +51,13 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       });
 
       if (response.ok) {
-        toast.success("Site added successfully!"); // 2. Success Toast
+        toast.success("Site added successfully!"); 
         setIsModalOpen(false);
-        getSiteFunction().then((data) => setSites(data)); // Refresh the site list
-        // router.push('/dashboard');
+        getSiteFunction().then((data) => setSites(data)); 
+        
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || "Failed to add site. Try again."); // 3. Error Toast
+        toast.error(errorData.message || "Failed to add site. Try again."); 
       }
     } catch (error) {
       toast.error("Network error. Is your Go backend running?");
@@ -72,7 +70,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       prevSites.map((s) => (s.id === siteId ? { ...s, is_active } : s))
     );
 
-    // Also update activeSite so the Drawer UI stays in sync
+    
     if (activeSite?.id === siteId) {
       setActiveSite((prev) => prev ? { ...prev, is_active } : null);
     }
@@ -184,7 +182,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
         </div>
 
         <div className="space-y-4">
-          {watcher.sites.map((site: Site, idx: number) => (
+          {sites.map((site: Site, idx: number) => (
             <motion.div
               key={site.id}
               initial={{ opacity: 0, x: -10 }}
@@ -195,7 +193,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
               <div className="flex items-center gap-4 md:col-span-4 min-w-0">
                 <div className="relative shrink-0">
                   <div
-                    key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`} // Unique key to trigger animation on status change
+                    key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`} 
                     className="absolute w-full h-full rounded-full bg-emerald-500/50 animate-ping-once"
                   />
 

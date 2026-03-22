@@ -151,7 +151,6 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                                     <p className="text-xs text-slate-400">Verified via HTTP {site.last_status}</p>
                                 </div>
                             </div>
-
                             {/* History List */}
                             <div>
                                 <h3 className="text-slate-300 font-bold mb-4 flex items-center gap-2">

@@ -1,34 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from "react";
 
-
+// hooks/use-site-watcher.ts
 interface SiteUpdate {
   type: string;
   data: {
     site_id: number;
     last_status: number;
     latency_ms: number;
-    time_stamp : string;
+    time_stamp: string;
   };
 }
 
-export const useSiteWatcher = (initialSites: any[], token: string | null) => {
-  const [sites, setSites] = useState(initialSites);
-
+export const useSiteWatcher = (
+  token: string | null, 
+  // We accept the dispatch function from the dashboard
+  setSites: React.Dispatch<React.SetStateAction<any[]>> 
+) => {
   useEffect(() => {
-    
-    
-    const socket = new WebSocket(`ws://localhost:8080/ws?token=${token}`);
+    // GUARD: Don't connect if token is null
+    if (!token) return;
 
-    socket.onopen = () => {
-      console.log('Connected to Site Watcher Hub');
-    };
+    const socket = new WebSocket(`ws://localhost:8080/ws?token=${token}`);
 
     socket.onmessage = (event) => {
       const message: SiteUpdate = JSON.parse(event.data);
 
       if (message.type === 'SITE_UPDATE') {
-        
-        console.log("Hub message received:", message);
+        // Update the state that lives in dashboard.tsx
         setSites((prevSites) =>
           prevSites.map((site) =>
             site.id === message.data.site_id
@@ -44,12 +42,6 @@ export const useSiteWatcher = (initialSites: any[], token: string | null) => {
       }
     };
 
-    socket.onclose = () => {
-      console.log('Disconnected from Hub');
-    };
-
     return () => socket.close();
-  }, [token, initialSites]);
-
-  return { sites, setSites };
+  }, [token, setSites]); // Dependencies
 };
