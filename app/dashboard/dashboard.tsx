@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import AddSiteModal from '../components/dashboard/add-site-modal';
 import { clearAuthCookie, getAuthCookie } from '../actions/auth';
-import { getHistory, updateSiteStatus } from '../actions/site';
+import { deleteSite, getHistory, updateSiteStatus } from '../actions/site';
 import { Site } from '../types/site';
 import SiteAnalyticsDrawer from '../components/dashboard/site-analytics-drawer';
 import { useSiteWatcher } from '../hook/useSiteWatcher';
-import { p } from 'framer-motion/client';
+import { DeleteSiteModal } from '../components/dashboard/delete-site-modal';
 
 
 export default function Dashboard({ initialData, getSiteFunction }: { initialData: Site[], getSiteFunction: () => Promise<Site[]> }) {
@@ -51,13 +51,12 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       });
 
       if (response.ok) {
-        toast.success("Site added successfully!"); 
+        toast.success("Site added successfully!");
         setIsModalOpen(false);
-        getSiteFunction().then((data) => setSites(data)); 
-        
+        getSiteFunction().then((data) => setSites(data));
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || "Failed to add site. Try again."); 
+        toast.error(errorData.message || "Failed to add site. Try again.");
       }
     } catch (error) {
       toast.error("Network error. Is your Go backend running?");
@@ -70,7 +69,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       prevSites.map((s) => (s.id === siteId ? { ...s, is_active } : s))
     );
 
-    
+
     if (activeSite?.id === siteId) {
       setActiveSite((prev) => prev ? { ...prev, is_active } : null);
     }
@@ -99,9 +98,38 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
     setActiveSite(site);
     setAnalyticsOpen(true);
   }
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const handleDelete = (site: Site) => {
+    setSiteToDelete(site);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    try {
+      console.log(siteToDelete.id);
+      await deleteSite(siteToDelete.id);
+      toast.success("Site deleted successfully!");
+      setSites((prev) => prev.filter((s) => s.id !== siteToDelete.id));
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete site. Please try again.");
+    }
+    setLoading(false);
+    setIsDeleteModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans">
+      <DeleteSiteModal 
+        isOpen={isDeleteModalOpen}
+        siteName={siteToDelete?.name}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        isDeleting={loading}
+      />
       <SiteAnalyticsDrawer
         isOpen={analyticsOpen}
         onClose={() => setAnalyticsOpen(false)}
@@ -193,7 +221,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
               <div className="flex items-center gap-4 md:col-span-4 min-w-0">
                 <div className="relative shrink-0">
                   <div
-                    key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`} 
+                    key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`}
                     className="absolute w-full h-full rounded-full bg-emerald-500/50 animate-ping-once"
                   />
 
@@ -254,7 +282,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
                   Analytics
                 </button>
 
-                <button className="p-2 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
+                <button onClick={() => handleDelete(site)} className="p-2 text-slate-500 hover:text-red-400 transition-colors shrink-0">
                   <TrashIcon />
                 </button>
               </div>

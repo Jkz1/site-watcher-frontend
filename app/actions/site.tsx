@@ -32,7 +32,8 @@ export async function getSite() {
     return res.json();
 }
 
-export async function getHistory(siteId : number ) {
+export async function getHistory(siteId: number) {
+
     const token = await getAuthCookie();
     const res = await fetch(`${baseurl}/sites/history`, {
         method: "PUT",
@@ -41,6 +42,19 @@ export async function getHistory(siteId : number ) {
     });
     if (!res.ok) throw new Error('Failed to fetch data');
     return res.json();
+}
+
+export async function deleteSite(siteId: number) {
+    console.log(siteId);
+    const token = await getAuthCookie();
+    const res = await fetch(`${baseurl}/sites`, {
+        method: "DELETE",
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ site_id: siteId })
+    });
+    console.log(res);
+    if (!res.ok) throw new Error('Failed to delete data');
+    return res.ok;
 }
 // import { cookies } from 'next/headers';
 
