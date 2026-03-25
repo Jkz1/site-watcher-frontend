@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { Play, Pause, Loader2, TrashIcon } from 'lucide-react';
+import { Play, Pause, Loader2, TrashIcon, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -12,7 +12,6 @@ import SiteAnalyticsDrawer from '../components/dashboard/site-analytics-drawer';
 import { useSiteWatcher } from '../hook/useSiteWatcher';
 import { DeleteSiteModal } from '../components/dashboard/delete-site-modal';
 
-
 export default function Dashboard({ initialData, getSiteFunction }: { initialData: Site[], getSiteFunction: () => Promise<Site[]> }) {
   const baseurl = process.env.NEXT_PUBLIC_BASE_URL
   const router = useRouter();
@@ -22,6 +21,10 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   useEffect(() => {
     getAuthCookie().then((t) => {
@@ -62,13 +65,11 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       toast.error("Network error. Is your Go backend running?");
     }
   }
-  const [isLoading, setIsLoading] = useState(false);
 
   const updateLocalSite = (siteId: number, is_active: boolean) => {
     setSites((prevSites) =>
       prevSites.map((s) => (s.id === siteId ? { ...s, is_active } : s))
     );
-
 
     if (activeSite?.id === siteId) {
       setActiveSite((prev) => prev ? { ...prev, is_active } : null);
@@ -98,16 +99,13 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
     setActiveSite(site);
     setAnalyticsOpen(true);
   }
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [siteToDelete, setSiteToDelete] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const handleDelete = (site: Site) => {
     setSiteToDelete(site);
     setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = async () => {
-    setLoading(true);
+    setLoadingDelete(true);
     try {
       console.log(siteToDelete.id);
       await deleteSite(siteToDelete.id);
@@ -117,18 +115,18 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
       console.log(error);
       toast.error("Failed to delete site. Please try again.");
     }
-    setLoading(false);
+    setLoadingDelete(false);
     setIsDeleteModalOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans">
-      <DeleteSiteModal 
+      <DeleteSiteModal
         isOpen={isDeleteModalOpen}
         siteName={siteToDelete?.name}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        isDeleting={loading}
+        isDeleting={loadingDelete}
       />
       <SiteAnalyticsDrawer
         isOpen={analyticsOpen}
@@ -210,84 +208,115 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
         </div>
 
         <div className="space-y-4">
-          {sites.map((site: Site, idx: number) => (
-            <motion.div
-              key={site.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="group p-5 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-emerald-500/30 backdrop-blur-md grid grid-cols-1 md:grid-cols-12 items-center gap-6 transition-all"
-            >
-
-              <div className="flex items-center gap-4 md:col-span-4 min-w-0">
-                <div className="relative shrink-0">
-                  <div
-                    key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`}
-                    className="absolute w-full h-full rounded-full bg-emerald-500/50 animate-ping-once"
-                  />
-
-                  <div className={`w-3 h-3 rounded-full ${site.last_status === 200 ? 'bg-emerald-500' : 'bg-red-500'} ${site.is_active ? 'animate-pulse' : ''}`} />
-                  <div className={`absolute inset-0 w-3 h-3 rounded-full blur-[6px] ${site.last_status === 200 ? 'bg-emerald-500/80' : 'bg-red-500/80'}`} />
-                </div>
-                <div className="truncate">
-                  <h3 className="text-white font-bold text-lg leading-tight truncate">{site.name}</h3>
-                  <p className="text-slate-500 text-xs font-mono truncate">{site.url}</p>
-                </div>
-              </div>
-
-
-              <div className="flex justify-between md:justify-around md:col-span-5 border-y md:border-y-0 border-slate-800 py-4 md:py-0">
-                <div className="text-center">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Status</p>
-                  <p className={`text-sm font-mono ${site.last_status === 200 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {site.last_status === 200 ? 'HTTP 200' : `ERR ${site.last_status}`}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Latency</p>
-                  <p className={`font-mono text-sm ${site.last_status === 200 ? 'text-white' : 'text-slate-600'}`}>
-                    {site.last_status === 200 ? `${site.latency_ms}ms` : '—'}
-                  </p>
-                </div>
-                <div className="text-center hidden lg:block">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Monitored Since</p>
-                  <p className="text-slate-300 font-mono text-sm">
-                    {site.created_at.split('T')[0]}
-                  </p>
-                </div>
-              </div>
-
-
-              <div className="flex items-center justify-end gap-3 md:col-span-3">
-                <button
-                  onClick={() => handleToggle(idx)}
-                  disabled={isLoading}
-                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 border backdrop-blur-sm ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'} ${site.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'}`}
-                >
-                  <div className="relative w-3 h-3 flex items-center justify-center">
-                    {isLoading ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : site.is_active ? (
-                      <>
-                        <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20"></span>
-                        <Pause size={12} fill="currentColor" className="relative transition-transform group-hover:scale-110" />
-                      </>
-                    ) : (
-                      <Play size={12} fill="currentColor" className="transition-transform group-hover:scale-110" />
-                    )}
+          {/* 1. LOADING STATE */}
+          {isLoading ? (
+            [1, 2, 3].map((i) => (
+              <div key={i} className="p-5 rounded-2xl bg-slate-900/20 border border-slate-800/50 flex items-center justify-between animate-pulse">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-3 h-3 rounded-full bg-slate-800" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-slate-800 rounded" />
+                    <div className="h-3 w-48 bg-slate-800/50 rounded" />
                   </div>
-                  <span className="tracking-wider">{site.is_active ? 'Monitoring' : 'Paused'}</span>
-                </button>
-
-                <button onClick={() => handleAnalytics(site)} className="hidden sm:block px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
-                  Analytics
-                </button>
-
-                <button onClick={() => handleDelete(site)} className="p-2 text-slate-500 hover:text-red-400 transition-colors shrink-0">
-                  <TrashIcon />
-                </button>
+                </div>
+                <div className="h-9 w-24 bg-slate-800 rounded-lg hidden md:block" />
               </div>
+            ))
+          ) : sites.length === 0 ? (
+            /* 2. EMPTY STATE */
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-900/10"
+            >
+              <Globe size={40} className="text-slate-700 mb-4" />
+              <h3 className="text-white font-bold">No sites found</h3>
+              <p className="text-slate-500 text-sm mb-6">Add a URL to start monitoring.</p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+              >
+                + Add Site
+              </button>
             </motion.div>
-          ))}
+          ) : (
+            /* 3. DATA STATE (Your Original Map) */
+            sites.map((site: Site, idx: number) => (
+              <motion.div
+                key={site.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="group p-5 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-emerald-500/30 backdrop-blur-md grid grid-cols-1 md:grid-cols-12 items-center gap-6 transition-all"
+              >
+                {/* ... Rest of your existing card code ... */}
+                <div className="flex items-center gap-4 md:col-span-4 min-w-0">
+                  <div className="relative shrink-0">
+                    <div
+                      key={`ping-${site.id}-${site.last_status}-${site.latency_ms}-${site.last_checked}`}
+                      className="absolute w-full h-full rounded-full bg-emerald-500/50 animate-ping-once"
+                    />
+                    <div className={`w-3 h-3 rounded-full ${site.last_status === 200 ? 'bg-emerald-500' : 'bg-red-500'} ${site.is_active ? 'animate-pulse' : ''}`} />
+                    <div className={`absolute inset-0 w-3 h-3 rounded-full blur-[6px] ${site.last_status === 200 ? 'bg-emerald-500/80' : 'bg-red-500/80'}`} />
+                  </div>
+                  <div className="truncate">
+                    <h3 className="text-white font-bold text-lg leading-tight truncate">{site.name}</h3>
+                    <p className="text-slate-500 text-xs font-mono truncate">{site.url}</p>
+                  </div>
+                </div>
+
+                {/* Status & Latency Section */}
+                <div className="flex justify-between md:justify-around md:col-span-5 border-y md:border-y-0 border-slate-800 py-4 md:py-0">
+                  <div className="text-center">
+                    <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Status</p>
+                    <p className={`text-sm font-mono ${site.last_status === 200 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {site.last_status === 200 ? 'HTTP 200' : `ERR ${site.last_status}`}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Latency</p>
+                    <p className={`font-mono text-sm ${site.last_status === 200 ? 'text-white' : 'text-slate-600'}`}>
+                      {site.last_status === 200 ? `${site.latency_ms}ms` : '—'}
+                    </p>
+                  </div>
+                  <div className="text-center hidden lg:block">
+                    <p className="text-slate-500 text-[10px] uppercase font-bold mb-1 tracking-tighter font-mono">Monitored Since</p>
+                    <p className="text-slate-300 font-mono text-sm">
+                      {site.created_at.split('T')[0]}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions Section */}
+                <div className="flex items-center justify-end gap-3 md:col-span-3">
+                  <button
+                    onClick={() => handleToggle(idx)}
+                    disabled={isLoading}
+                    className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 border backdrop-blur-sm ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'} ${site.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'}`}
+                  >
+                    <div className="relative w-3 h-3 flex items-center justify-center">
+                      {site.is_active ? (
+                        <>
+                          <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20"></span>
+                          <Pause size={12} fill="currentColor" className="relative transition-transform group-hover:scale-110" />
+                        </>
+                      ) : (
+                        <Play size={12} fill="currentColor" className="transition-transform group-hover:scale-110" />
+                      )}
+                    </div>
+                    <span className="tracking-wider">{site.is_active ? 'Monitoring' : 'Paused'}</span>
+                  </button>
+
+                  <button onClick={() => handleAnalytics(site)} className="hidden sm:block px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-700">
+                    Analytics
+                  </button>
+
+                  <button onClick={() => handleDelete(site)} className="p-2 text-slate-500 hover:text-red-400 transition-colors shrink-0">
+                    <TrashIcon />
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </main>
       <AddSiteModal isModalOpen={isModalOpen} onClose={setIsModalOpen} onAdd={handleAddSite} />

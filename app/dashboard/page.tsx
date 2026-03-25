@@ -1,6 +1,5 @@
 // app/dashboard/page.tsx
 import Dashboard from './dashboard';
-import { getAuthCookie } from '../actions/auth';
 import { getSite } from '../actions/site';
 
 

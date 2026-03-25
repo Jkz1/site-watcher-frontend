@@ -55,7 +55,7 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60"
                     />
 
                     {/* Drawer Panel */}
@@ -64,7 +64,7 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 h-full w-full max-w-md md:max-w-lg bg-slate-950 border-l border-slate-800 shadow-2xl z-[70] flex flex-col"
+                        className="fixed right-0 top-0 h-full w-full max-w-md md:max-w-lg bg-slate-950 border-l border-slate-800 shadow-2xl z-70 flex flex-col"
                     >
                         {/* Header */}
                         <div className="p-6 border-b border-slate-800 flex justify-between items-start">
@@ -73,7 +73,7 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                                     {site.name}
                                     <span className={`w-2 h-2 rounded-full ${isUp ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
                                 </h2>
-                                <p className="text-slate-500 font-mono text-xs mt-1 truncate max-w-[250px]">{site.url}</p>
+                                <p className="text-slate-500 font-mono text-xs mt-1 truncate max-w-62.5">{site.url}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -106,7 +106,7 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                                     <div className="flex items-center gap-3">
                                         <div className="relative flex items-center justify-center">
                                             <div className={`w-3 h-3 rounded-full ${site.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                                            {site.is_active && <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-500/50 blur-[4px]" />}
+                                            {site.is_active && <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-500/50 blur-xs" />}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-white">
@@ -156,24 +156,49 @@ export default function SiteAnalyticsDrawer({ isOpen, onClose, onStatusUpdate, s
                                 <h3 className="text-slate-300 font-bold mb-4 flex items-center gap-2">
                                     <Clock size={16} /> Check History
                                 </h3>
+
                                 <div className="space-y-2">
-                                    {history.map((log) => (
-                                        <div
-                                            key={log.id}
-                                            className="group flex items-center justify-between p-3 rounded-xl bg-slate-900/30 border border-slate-800/50 hover:border-slate-700 transition-all"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${log.status_code === 200 ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                                <div>
-                                                    <p className="text-sm font-mono text-slate-200">HTTP {log.status_code}</p>
-                                                    <p className="text-[10px] text-slate-500 uppercase">{new Date(log.checked_at).toLocaleString()}</p>
+                                    {isLoading ? (
+                                        // Loading State
+                                        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                                            <Loader2 size={24} className="text-emerald-500 animate-spin opacity-50" />
+                                            <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">Fetching Logs...</p>
+                                        </div>
+                                    ) : history && history.length > 0 ? (
+                                        // Data State
+                                        history.map((log) => (
+                                            <div
+                                                key={log.id}
+                                                className="group flex items-center justify-between p-3 rounded-xl bg-slate-900/30 border border-slate-800/50 hover:border-slate-700 transition-all"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${log.status_code === 200 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                                    <div>
+                                                        <p className="text-sm font-mono text-slate-200">HTTP {log.status_code}</p>
+                                                        <p className="text-[10px] text-slate-500 uppercase">{new Date(log.checked_at).toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs font-mono text-slate-400 group-hover:text-emerald-400 transition-colors">
+                                                    {log.latency_ms}ms
                                                 </div>
                                             </div>
-                                            <div className="text-xs font-mono text-slate-400 group-hover:text-emerald-400 transition-colors">
-                                                {log.latency_ms}ms
+                                        ))
+                                    ) : (
+                                        // Empty State
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex flex-col items-center justify-center py-12 px-6 rounded-2xl border border-dashed border-slate-800 bg-slate-900/10"
+                                        >
+                                            <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mb-4">
+                                                <Activity size={20} className="text-slate-600" />
                                             </div>
-                                        </div>
-                                    ))}
+                                            <h4 className="text-slate-300 font-medium text-sm">No checks recorded yet</h4>
+                                            <p className="text-slate-500 text-center text-xs mt-1 leading-relaxed">
+                                                Once the background worker starts monitoring {site.name}, check logs will appear here.
+                                            </p>
+                                        </motion.div>
+                                    )}
                                 </div>
                             </div>
                         </div>
