@@ -106,6 +106,7 @@ export default function Dashboard({ initialData, getSiteFunction }: { initialDat
 
   const confirmDelete = async () => {
     setLoadingDelete(true);
+    // Debugging log to check the site ID before deletion
     try {
       console.log(siteToDelete.id);
       await deleteSite(siteToDelete.id);
